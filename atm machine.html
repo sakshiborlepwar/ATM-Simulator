@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATM Machine</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f2f2f2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .container {
+        width: 380px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        text-align: center;
+    }
+
+    h2 {
+        margin-bottom: 20px;
+    }
+
+    input, button {
+        width: 80%;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 5px;
+        border: 1px solid #888;
+        font-size: 16px;
+    }
+
+    button {
+        background: #0078ff;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    button:hover {
+        background: #005fcc;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .history-item {
+        background: #e9f5ff;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 5px;
+        text-align: left;
+        border-left: 4px solid #0078ff;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <h2>ATM Login</h2>
+        <p>Enter PIN:</p>
+        <input type="password" id="pin-input">
+        <button onclick="checkPin()">Login</button>
+    </div>
+
+    <!-- Menu Screen -->
+    <div id="menu-screen" class="hidden">
+        <h2>ATM Menu</h2>
+        <button onclick="checkBalance()">Check Balance</button>
+        <button onclick="showDeposit()">Deposit</button>
+        <button onclick="showWithdraw()">Withdraw</button>
+        <button onclick="showHistory()">Transaction History</button>
+        <button onclick="exitATM()">Exit</button>
+    </div>
+
+    <!-- Deposit Screen -->
+    <div id="deposit-screen" class="hidden">
+        <h2>Deposit Money</h2>
+        <input type="number" id="deposit-amount" placeholder="Enter amount">
+        <button onclick="depositMoney()">Deposit</button>
+        <button onclick="showMenu()">Back</button>
+    </div>
+
+    <!-- Withdraw Screen -->
+    <div id="withdraw-screen" class="hidden">
+        <h2>Withdraw Money</h2>
+        <input type="number" id="withdraw-amount" placeholder="Enter amount">
+        <button onclick="withdrawMoney()">Withdraw</button>
+        <button onclick="showMenu()">Back</button>
+    </div>
+
+    <!-- Transaction History Screen -->
+    <div id="history-screen" class="hidden">
+        <h2>Transaction History</h2>
+        <div id="history-list"></div>
+        <button onclick="showMenu()">Back</button>
+    </div>
+
+</div>
+
+<script>
+    let balance = 1000.0;
+    let history = [];
+    const correctPin = "1234";
+
+    function showScreen(id) {
+        document.querySelectorAll(".container > div").forEach(div => div.classList.add("hidden"));
+        document.getElementById(id).classList.remove("hidden");
+    }
+
+    function checkPin() {
+        const enteredPin = document.getElementById("pin-input").value;
+        if (enteredPin === correctPin) {
+            showScreen("menu-screen");
+        } else {
+            alert("Incorrect PIN!");
+        }
+    }
+
+    function checkBalance() {
+        alert("Your current balance is ₹" + balance.toFixed(2));
+    }
+
+    function showDeposit() {
+        showScreen("deposit-screen");
+    }
+
+    function showWithdraw() {
+        showScreen("withdraw-screen");
+    }
+
+    // Get Date Only: DD/MM/YYYY
+    function getDateOnly() {
+        let date = new Date();
+        let day = String(date.getDate()).padStart(2, "0");
+        let month = String(date.getMonth() + 1).padStart(2, "0");
+        let year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    // Get Time Only: HH:MM:SS AM/PM
+    function getTimeOnly() {
+        let date = new Date();
+        let hours = date.getHours();
+        let minutes = String(date.getMinutes()).padStart(2, "0");
+        let seconds = String(date.getSeconds()).padStart(2, "0");
+
+        let ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+
+        return `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    function depositMoney() {
+        let amount = parseFloat(document.getElementById("deposit-amount").value);
+        if (amount > 0) {
+            balance += amount;
+
+            history.push({
+                type: "Deposit",
+                amount: amount,
+                date: getDateOnly(),
+                time: getTimeOnly()
+            });
+
+            alert("₹" + amount.toFixed(2) + " deposited successfully.");
+            document.getElementById("deposit-amount").value = "";
+            showMenu();
+        } else {
+            alert("Enter a valid amount.");
+        }
+    }
+
+    function withdrawMoney() {
+        let amount = parseFloat(document.getElementById("withdraw-amount").value);
+        if (amount > 0 && amount <= balance) {
+            balance -= amount;
+
+            history.push({
+                type: "Withdraw",
+                amount: amount,
+                date: getDateOnly(),
+                time: getTimeOnly()
+            });
+
+            alert("₹" + amount.toFixed(2) + " withdrawn successfully.");
+            document.getElementById("withdraw-amount").value = "";
+            showMenu();
+        } else {
+            alert("Insufficient funds or invalid amount.");
+        }
+    }
+
+    function showHistory() {
+        showScreen("history-screen");
+        let list = document.getElementById("history-list");
+        list.innerHTML = "";
+
+        if (history.length === 0) {
+            list.innerHTML = "<p>No transactions yet.</p>";
+            return;
+        }
+
+        history.forEach(item => {
+            let div = document.createElement("div");
+            div.className = "history-item";
+            div.innerHTML = `
+                <b>${item.type}</b><br>
+                Amount: ₹${item.amount.toFixed(2)}<br>
+                Date: ${item.date}<br>
+                Time: ${item.time}
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function showMenu() {
+        showScreen("menu-screen");
+    }
+
+    function exitATM() {
+        alert("Thank you! ATM session closed.");
+        showScreen("login-screen");
+    }
+</script>
+
+</body>
+</html>
